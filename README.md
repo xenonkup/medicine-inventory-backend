@@ -26,10 +26,20 @@ pkg/               # jwt, hash, response helpers
 
 ## Run locally
 ```bash
-cp .env.example .env     # ตั้ง DATABASE_URL (Supabase) + JWT_SECRET
+# 1) start a local Postgres (Docker)
+docker compose up -d
+
+# 2) configure env
+cp .env.example .env
+#   ตั้ง DATABASE_URL=postgres://postgres:postgres@localhost:5433/pharmacy?sslmode=disable
+#   และ JWT_SECRET ให้เป็นค่าสุ่มยาว ๆ
+
+# 3) run the API (auto-migrates + creates the bootstrap admin)
 go run ./cmd/api         # http://localhost:8080/api/v1/health
 ```
 รันครั้งแรกจะสร้าง Admin เริ่มต้นจากค่า `BOOTSTRAP_ADMIN_*` (ค่าเริ่มต้น `admin` / `admin1234`)
+
+> Production ใช้ Supabase แทน: ตั้ง `DATABASE_URL` เป็น connection-pooler string (port 6543)
 
 ## API (ปัจจุบัน)
 - `POST /api/v1/auth/login` · `/auth/refresh` · `/auth/logout` · `GET /auth/me`
