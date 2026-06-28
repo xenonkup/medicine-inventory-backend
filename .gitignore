@@ -1,0 +1,19 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+/bin/
+/tmp/
+
+# Env
+.env
+.env.local
+
+# Test/coverage
+*.out
+coverage.txt
+
+# IDE
+.idea/
+.vscode/
