@@ -28,14 +28,18 @@ func main() {
 	// --- Dependency wiring (bottom-up) ---
 	jwtMgr := jwt.NewManager(cfg.JWTSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
 
+	txManager := repository.NewTxManager(db)
 	userRepo := repository.NewUserRepository(db)
 	categoryRepo := repository.NewCategoryRepository(db)
 	medicineRepo := repository.NewMedicineRepository(db)
+	lotRepo := repository.NewLotRepository(db)
+	transactionRepo := repository.NewTransactionRepository(db)
 
 	authService := service.NewAuthService(userRepo, jwtMgr)
 	userService := service.NewUserService(userRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
-	medicineService := service.NewMedicineService(medicineRepo, categoryRepo)
+	medicineService := service.NewMedicineService(medicineRepo, categoryRepo, lotRepo)
+	stockService := service.NewStockService(txManager, lotRepo, transactionRepo, medicineRepo)
 
 	// Create the first admin if the database has no users yet.
 	if err := userService.EnsureBootstrapAdmin(
@@ -52,6 +56,7 @@ func main() {
 		User:     handler.NewUserHandler(userService),
 		Category: handler.NewCategoryHandler(categoryService),
 		Medicine: handler.NewMedicineHandler(medicineService),
+		Stock:    handler.NewStockHandler(stockService),
 	}
 
 	r := router.New(cfg, jwtMgr, handlers)

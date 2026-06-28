@@ -15,14 +15,22 @@ import (
 type MedicineService struct {
 	medicines  repository.MedicineRepository
 	categories repository.CategoryRepository
+	lots       repository.LotRepository
 }
 
 // NewMedicineService builds a MedicineService.
 func NewMedicineService(
 	medicines repository.MedicineRepository,
 	categories repository.CategoryRepository,
+	lots repository.LotRepository,
 ) *MedicineService {
-	return &MedicineService{medicines: medicines, categories: categories}
+	return &MedicineService{medicines: medicines, categories: categories, lots: lots}
+}
+
+// StockOnHand returns a map of medicine id -> derived stock (sum of lot
+// remaining) for the given medicines.
+func (s *MedicineService) StockOnHand(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]int, error) {
+	return s.lots.SumRemainingByMedicineIDs(ctx, ids)
 }
 
 // Create adds a new medicine after validating its category.

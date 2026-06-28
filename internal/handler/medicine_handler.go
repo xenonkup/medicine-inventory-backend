@@ -39,15 +39,26 @@ func (h *MedicineHandler) List(c *gin.Context) {
 		}
 	}
 
-	medicines, total, err := h.medicines.List(c.Request.Context(), filter)
+	ctx := c.Request.Context()
+	medicines, total, err := h.medicines.List(ctx, filter)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+
+	ids := make([]uuid.UUID, 0, len(medicines))
+	for i := range medicines {
+		ids = append(ids, medicines[i].ID)
+	}
+	stock, err := h.medicines.StockOnHand(ctx, ids)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
 	out := make([]dto.MedicineResponse, 0, len(medicines))
 	for i := range medicines {
-		// StockOnHand stays 0 until Phase 3 introduces lots.
-		out = append(out, dto.NewMedicineResponse(&medicines[i], 0))
+		out = append(out, dto.NewMedicineResponse(&medicines[i], stock[medicines[i].ID]))
 	}
 	response.Paginated(c, out, page, pageSize, total)
 }
@@ -81,12 +92,18 @@ func (h *MedicineHandler) Get(c *gin.Context) {
 	if !ok {
 		return
 	}
-	medicine, err := h.medicines.GetByID(c.Request.Context(), id)
+	ctx := c.Request.Context()
+	medicine, err := h.medicines.GetByID(ctx, id)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
-	response.OK(c, dto.NewMedicineResponse(medicine, 0))
+	stock, err := h.medicines.StockOnHand(ctx, []uuid.UUID{medicine.ID})
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.OK(c, dto.NewMedicineResponse(medicine, stock[medicine.ID]))
 }
 
 // Update godoc

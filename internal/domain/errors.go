@@ -35,4 +35,11 @@ var (
 	// Medicine
 	ErrMedicineNotFound      = NewAppError("MEDICINE_NOT_FOUND", 404, "medicine not found")
 	ErrDuplicateMedicineCode = NewAppError("DUPLICATE_MEDICINE_CODE", 409, "medicine code already exists")
+	ErrMedicineInactive      = NewAppError("MEDICINE_INACTIVE", 409, "medicine is deactivated")
+
+	// Inventory / stock movements
+	ErrLotNotFound          = NewAppError("LOT_NOT_FOUND", 404, "lot not found")
+	ErrInsufficientStock    = NewAppError("INSUFFICIENT_STOCK", 409, "not enough stock available to dispense")
+	ErrReturnAfterExpiry    = NewAppError("RETURN_AFTER_EXPIRY", 409, "cannot return into an expired lot")
+	ErrReturnExceedsReceived = NewAppError("RETURN_EXCEEDS_RECEIVED", 409, "return would exceed the lot's received quantity")
 )

@@ -158,6 +158,15 @@ func parseID(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
+// parseUUID parses a raw string into a UUID without writing a response.
+func parseUUID(raw string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
 func paginationParams(c *gin.Context) (page, pageSize int) {
 	page, _ = strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ = strconv.Atoi(c.DefaultQuery("page_size", "20"))

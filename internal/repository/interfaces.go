@@ -51,3 +51,32 @@ type MedicineRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*domain.Medicine, error)
 	List(ctx context.Context, f MedicineFilter) ([]domain.Medicine, int64, error)
 }
+
+// LotRepository abstracts persistence for lots. Reads/writes honour any
+// transaction carried on the context (see WithTx).
+type LotRepository interface {
+	Create(ctx context.Context, lot *domain.Lot) error
+	Save(ctx context.Context, lot *domain.Lot) error
+	FindByID(ctx context.Context, id uuid.UUID) (*domain.Lot, error)
+	FindByMedicineAndLotNumber(ctx context.Context, medicineID uuid.UUID, lotNumber string) (*domain.Lot, error)
+	// FindAvailableForUpdate returns lots with remaining stock for a medicine,
+	// ordered for FEFO (earliest expiry first), locked FOR UPDATE.
+	FindAvailableForUpdate(ctx context.Context, medicineID uuid.UUID) ([]domain.Lot, error)
+	ListByMedicine(ctx context.Context, medicineID uuid.UUID) ([]domain.Lot, error)
+	SumRemaining(ctx context.Context, medicineID uuid.UUID) (int, error)
+	SumRemainingByMedicineIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]int, error)
+}
+
+// TransactionFilter narrows a ledger listing.
+type TransactionFilter struct {
+	MedicineID *uuid.UUID
+	Type       *domain.TxType
+	Offset     int
+	Limit      int
+}
+
+// TransactionRepository abstracts persistence for the append-only ledger.
+type TransactionRepository interface {
+	Create(ctx context.Context, txn *domain.StockTransaction) error
+	List(ctx context.Context, f TransactionFilter) ([]domain.StockTransaction, int64, error)
+}

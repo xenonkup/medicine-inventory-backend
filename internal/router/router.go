@@ -15,6 +15,7 @@ type Handlers struct {
 	User     *handler.UserHandler
 	Category *handler.CategoryHandler
 	Medicine *handler.MedicineHandler
+	Stock    *handler.StockHandler
 }
 
 // New builds the Gin engine with all middleware and routes registered.
@@ -67,9 +68,19 @@ func New(cfg *config.Config, jwtMgr *jwt.Manager, h Handlers) *gin.Engine {
 	{
 		medicines.GET("", h.Medicine.List)
 		medicines.GET("/:id", h.Medicine.Get)
+		medicines.GET("/:id/lots", h.Stock.LotsByMedicine)
 		medicines.POST("", middleware.AdminOnly(), h.Medicine.Create)
 		medicines.PUT("/:id", middleware.AdminOnly(), h.Medicine.Update)
 		medicines.DELETE("/:id", middleware.AdminOnly(), h.Medicine.Delete)
+	}
+
+	// --- Stock movements (Admin + Staff) ---
+	stock := v1.Group("/stock", middleware.Auth(jwtMgr))
+	{
+		stock.POST("/in", h.Stock.StockIn)
+		stock.POST("/out", h.Stock.StockOut)
+		stock.POST("/return", h.Stock.Return)
+		stock.GET("/transactions", h.Stock.Transactions)
 	}
 
 	return r
