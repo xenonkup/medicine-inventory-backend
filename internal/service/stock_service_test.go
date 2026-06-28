@@ -116,6 +116,17 @@ func (m *mockLotRepo) SumRemainingByMedicineIDs(_ context.Context, ids []uuid.UU
 	return res, nil
 }
 
+func (m *mockLotRepo) FindNearExpiry(_ context.Context, asOf time.Time, withinDays int) ([]domain.Lot, error) {
+	cutoff := asOf.AddDate(0, 0, withinDays)
+	var out []domain.Lot
+	for _, l := range m.lots {
+		if l.QtyRemaining > 0 && !l.ExpiryDate.After(cutoff) {
+			out = append(out, *l)
+		}
+	}
+	return out, nil
+}
+
 type mockTxnRepo struct {
 	created []domain.StockTransaction
 }
@@ -127,6 +138,10 @@ func (m *mockTxnRepo) Create(_ context.Context, txn *domain.StockTransaction) er
 
 func (m *mockTxnRepo) List(_ context.Context, _ repository.TransactionFilter) ([]domain.StockTransaction, int64, error) {
 	return m.created, int64(len(m.created)), nil
+}
+
+func (m *mockTxnRepo) CountSince(_ context.Context, _ time.Time) (int64, error) {
+	return int64(len(m.created)), nil
 }
 
 type mockMedicineRepo struct {

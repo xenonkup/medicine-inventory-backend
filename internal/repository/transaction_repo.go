@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -41,4 +42,13 @@ func (r *transactionRepository) List(ctx context.Context, f TransactionFilter) (
 		return nil, 0, err
 	}
 	return txns, total, nil
+}
+
+func (r *transactionRepository) CountSince(ctx context.Context, since time.Time) (int64, error) {
+	var n int64
+	err := dbFromCtx(ctx, r.db).
+		Model(&domain.StockTransaction{}).
+		Where("created_at >= ?", since).
+		Count(&n).Error
+	return n, err
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"pharmacy-backend/internal/domain"
@@ -65,6 +66,9 @@ type LotRepository interface {
 	ListByMedicine(ctx context.Context, medicineID uuid.UUID) ([]domain.Lot, error)
 	SumRemaining(ctx context.Context, medicineID uuid.UUID) (int, error)
 	SumRemainingByMedicineIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]int, error)
+	// FindNearExpiry returns lots of active medicines that still have stock and
+	// expire on or before asOf + withinDays, earliest expiry first (Medicine preloaded).
+	FindNearExpiry(ctx context.Context, asOf time.Time, withinDays int) ([]domain.Lot, error)
 }
 
 // TransactionFilter narrows a ledger listing.
@@ -79,4 +83,5 @@ type TransactionFilter struct {
 type TransactionRepository interface {
 	Create(ctx context.Context, txn *domain.StockTransaction) error
 	List(ctx context.Context, f TransactionFilter) ([]domain.StockTransaction, int64, error)
+	CountSince(ctx context.Context, since time.Time) (int64, error)
 }

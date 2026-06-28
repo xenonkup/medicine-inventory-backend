@@ -40,6 +40,7 @@ func main() {
 	categoryService := service.NewCategoryService(categoryRepo)
 	medicineService := service.NewMedicineService(medicineRepo, categoryRepo, lotRepo)
 	stockService := service.NewStockService(txManager, lotRepo, transactionRepo, medicineRepo)
+	dashboardService := service.NewDashboardService(medicineRepo, lotRepo, transactionRepo, cfg.NearExpiryDays)
 
 	// Create the first admin if the database has no users yet.
 	if err := userService.EnsureBootstrapAdmin(
@@ -55,8 +56,9 @@ func main() {
 		Auth:     handler.NewAuthHandler(authService),
 		User:     handler.NewUserHandler(userService),
 		Category: handler.NewCategoryHandler(categoryService),
-		Medicine: handler.NewMedicineHandler(medicineService),
-		Stock:    handler.NewStockHandler(stockService),
+		Medicine:  handler.NewMedicineHandler(medicineService),
+		Stock:     handler.NewStockHandler(stockService),
+		Dashboard: handler.NewDashboardHandler(dashboardService),
 	}
 
 	r := router.New(cfg, jwtMgr, handlers)

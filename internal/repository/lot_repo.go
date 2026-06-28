@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -106,4 +107,16 @@ func (r *lotRepository) SumRemainingByMedicineIDs(ctx context.Context, ids []uui
 		result[x.MedicineID] = x.Total
 	}
 	return result, nil
+}
+
+func (r *lotRepository) FindNearExpiry(ctx context.Context, asOf time.Time, withinDays int) ([]domain.Lot, error) {
+	cutoff := asOf.AddDate(0, 0, withinDays)
+	var lots []domain.Lot
+	err := dbFromCtx(ctx, r.db).
+		Preload("Medicine").
+		Joins("JOIN medicines ON medicines.id = lots.medicine_id AND medicines.is_active = true").
+		Where("lots.qty_remaining > 0 AND lots.expiry_date <= ?", cutoff).
+		Order("lots.expiry_date ASC").
+		Find(&lots).Error
+	return lots, err
 }

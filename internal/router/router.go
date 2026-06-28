@@ -13,9 +13,10 @@ import (
 type Handlers struct {
 	Auth     *handler.AuthHandler
 	User     *handler.UserHandler
-	Category *handler.CategoryHandler
-	Medicine *handler.MedicineHandler
-	Stock    *handler.StockHandler
+	Category  *handler.CategoryHandler
+	Medicine  *handler.MedicineHandler
+	Stock     *handler.StockHandler
+	Dashboard *handler.DashboardHandler
 }
 
 // New builds the Gin engine with all middleware and routes registered.
@@ -81,6 +82,14 @@ func New(cfg *config.Config, jwtMgr *jwt.Manager, h Handlers) *gin.Engine {
 		stock.POST("/out", h.Stock.StockOut)
 		stock.POST("/return", h.Stock.Return)
 		stock.GET("/transactions", h.Stock.Transactions)
+	}
+
+	// --- Dashboard & alerts (Admin + Staff) ---
+	dash := v1.Group("/dashboard", middleware.Auth(jwtMgr))
+	{
+		dash.GET("/summary", h.Dashboard.Summary)
+		dash.GET("/near-expiry", h.Dashboard.NearExpiry)
+		dash.GET("/low-stock", h.Dashboard.LowStock)
 	}
 
 	return r

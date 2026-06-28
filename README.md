@@ -47,10 +47,13 @@ go run ./cmd/api         # http://localhost:8080/api/v1/health
 - `/api/v1/categories` — read: ผู้ใช้ที่ login, write: Admin
 - `/api/v1/medicines` — read: ผู้ใช้ที่ login, write: Admin; `GET /medicines/:id/lots`
 - `/api/v1/stock/in` · `/stock/out` (FEFO) · `/stock/return` · `GET /stock/transactions` (Admin + Staff)
+- `/api/v1/dashboard/summary` · `/dashboard/near-expiry` · `/dashboard/low-stock` (Admin + Staff)
 
 ## Roadmap
 - [x] Phase 0 — Setup
 - [x] Phase 1 — Auth & Users
 - [x] Phase 2 — Master data (Category, Medicine)
 - [x] Phase 3 — Inventory core (Lot, Stock In/Out **FEFO**, Return; ledger; FEFO unit tests)
-- [ ] Phase 4 — Dashboard & LINE · Phase 5 — Reports/Excel · Phase 6 — Deploy
+- [x] Phase 4a — Dashboard + Near-Expiry (180d) + Low-Stock alerts
+- [ ] Phase 4b — LINE notifications + scheduler (deferred)
+- [ ] Phase 5 — Reports/Excel · Phase 6 — Deploy
