@@ -127,6 +127,10 @@ func (m *mockLotRepo) FindNearExpiry(_ context.Context, asOf time.Time, withinDa
 	return out, nil
 }
 
+func (m *mockLotRepo) StockByCategory(_ context.Context) ([]repository.CategoryStock, error) {
+	return nil, nil
+}
+
 type mockTxnRepo struct {
 	created []domain.StockTransaction
 }
@@ -142,6 +146,10 @@ func (m *mockTxnRepo) List(_ context.Context, _ repository.TransactionFilter) ([
 
 func (m *mockTxnRepo) CountSince(_ context.Context, _ time.Time) (int64, error) {
 	return int64(len(m.created)), nil
+}
+
+func (m *mockTxnRepo) AggregateByType(_ context.Context, _, _ time.Time) ([]repository.TypeAggregate, error) {
+	return nil, nil
 }
 
 type mockMedicineRepo struct {

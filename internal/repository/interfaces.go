@@ -69,6 +69,8 @@ type LotRepository interface {
 	// FindNearExpiry returns lots of active medicines that still have stock and
 	// expire on or before asOf + withinDays, earliest expiry first (Medicine preloaded).
 	FindNearExpiry(ctx context.Context, asOf time.Time, withinDays int) ([]domain.Lot, error)
+	// StockByCategory returns derived stock totals grouped by active category.
+	StockByCategory(ctx context.Context) ([]CategoryStock, error)
 }
 
 // TransactionFilter narrows a ledger listing.
@@ -79,9 +81,30 @@ type TransactionFilter struct {
 	Limit      int
 }
 
+// TypeAggregate is a per-type rollup of ledger entries over a period.
+type TypeAggregate struct {
+	Type     domain.TxType
+	Count    int64
+	TotalQty int64
+}
+
 // TransactionRepository abstracts persistence for the append-only ledger.
 type TransactionRepository interface {
 	Create(ctx context.Context, txn *domain.StockTransaction) error
 	List(ctx context.Context, f TransactionFilter) ([]domain.StockTransaction, int64, error)
 	CountSince(ctx context.Context, since time.Time) (int64, error)
+	AggregateByType(ctx context.Context, from, to time.Time) ([]TypeAggregate, error)
+}
+
+// CategoryStock is the derived stock total for one category.
+type CategoryStock struct {
+	Category string
+	Stock    int
+}
+
+// SettingRepository abstracts persistence for key/value system settings.
+type SettingRepository interface {
+	Get(ctx context.Context, key string) (*domain.Setting, error)
+	List(ctx context.Context) ([]domain.Setting, error)
+	Upsert(ctx context.Context, setting *domain.Setting) error
 }

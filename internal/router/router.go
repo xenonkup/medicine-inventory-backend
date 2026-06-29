@@ -17,6 +17,8 @@ type Handlers struct {
 	Medicine  *handler.MedicineHandler
 	Stock     *handler.StockHandler
 	Dashboard *handler.DashboardHandler
+	Report    *handler.ReportHandler
+	Settings  *handler.SettingsHandler
 }
 
 // New builds the Gin engine with all middleware and routes registered.
@@ -90,6 +92,20 @@ func New(cfg *config.Config, jwtMgr *jwt.Manager, h Handlers) *gin.Engine {
 		dash.GET("/summary", h.Dashboard.Summary)
 		dash.GET("/near-expiry", h.Dashboard.NearExpiry)
 		dash.GET("/low-stock", h.Dashboard.LowStock)
+	}
+
+	// --- Reports (Admin + Staff) ---
+	reports := v1.Group("/reports", middleware.Auth(jwtMgr))
+	{
+		reports.GET("/monthly", h.Report.Monthly)
+		reports.GET("/stock-by-category", h.Report.StockByCategory)
+	}
+
+	// --- Settings (read: any authenticated; write: Admin) ---
+	settings := v1.Group("/settings", middleware.Auth(jwtMgr))
+	{
+		settings.GET("", h.Settings.List)
+		settings.PUT("/:key", middleware.AdminOnly(), h.Settings.Update)
 	}
 
 	return r

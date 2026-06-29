@@ -6,33 +6,43 @@ import (
 
 	"github.com/google/uuid"
 
+	"pharmacy-backend/internal/domain"
 	"pharmacy-backend/internal/dto"
 	"pharmacy-backend/internal/repository"
 )
 
 // DashboardService computes dashboard KPIs and alert lists.
 type DashboardService struct {
-	medicines      repository.MedicineRepository
-	lots           repository.LotRepository
-	txns           repository.TransactionRepository
-	nearExpiryDays int
-	now            func() time.Time
+	medicines       repository.MedicineRepository
+	lots            repository.LotRepository
+	txns            repository.TransactionRepository
+	settings        *SettingsService
+	defaultExpiryDays int
+	now             func() time.Time
 }
 
-// NewDashboardService builds a DashboardService.
+// NewDashboardService builds a DashboardService. The near-expiry window is read
+// from settings at request time, falling back to defaultExpiryDays.
 func NewDashboardService(
 	medicines repository.MedicineRepository,
 	lots repository.LotRepository,
 	txns repository.TransactionRepository,
-	nearExpiryDays int,
+	settings *SettingsService,
+	defaultExpiryDays int,
 ) *DashboardService {
 	return &DashboardService{
-		medicines:      medicines,
-		lots:           lots,
-		txns:           txns,
-		nearExpiryDays: nearExpiryDays,
-		now:            time.Now,
+		medicines:         medicines,
+		lots:              lots,
+		txns:              txns,
+		settings:          settings,
+		defaultExpiryDays: defaultExpiryDays,
+		now:               time.Now,
 	}
+}
+
+// nearExpiryDays resolves the configured window (settings override default).
+func (s *DashboardService) nearExpiryDays(ctx context.Context) int {
+	return s.settings.GetInt(ctx, domain.SettingNearExpiryDays, s.defaultExpiryDays)
 }
 
 func startOfToday(now time.Time) time.Time {
@@ -68,14 +78,14 @@ func (s *DashboardService) Summary(ctx context.Context) (*dto.DashboardSummary, 
 		NearExpiryCount: len(nearExpiry),
 		LowStockCount:   len(lowStock),
 		TodayMovements:  todayMovements,
-		NearExpiryDays:  s.nearExpiryDays,
+		NearExpiryDays:  s.nearExpiryDays(ctx),
 	}, nil
 }
 
 // NearExpiry returns lots expiring within the configured window.
 func (s *DashboardService) NearExpiry(ctx context.Context) ([]dto.NearExpiryItem, error) {
 	now := startOfToday(s.now())
-	lots, err := s.lots.FindNearExpiry(ctx, now, s.nearExpiryDays)
+	lots, err := s.lots.FindNearExpiry(ctx, now, s.nearExpiryDays(ctx))
 	if err != nil {
 		return nil, err
 	}

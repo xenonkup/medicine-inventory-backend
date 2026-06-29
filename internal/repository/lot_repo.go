@@ -109,6 +109,20 @@ func (r *lotRepository) SumRemainingByMedicineIDs(ctx context.Context, ids []uui
 	return result, nil
 }
 
+func (r *lotRepository) StockByCategory(ctx context.Context) ([]CategoryStock, error) {
+	var rows []CategoryStock
+	err := dbFromCtx(ctx, r.db).
+		Table("categories c").
+		Select("c.name AS category, COALESCE(SUM(l.qty_remaining), 0) AS stock").
+		Joins("LEFT JOIN medicines m ON m.category_id = c.id AND m.is_active = true").
+		Joins("LEFT JOIN lots l ON l.medicine_id = m.id").
+		Where("c.is_active = true").
+		Group("c.id, c.name").
+		Order("c.name ASC").
+		Scan(&rows).Error
+	return rows, err
+}
+
 func (r *lotRepository) FindNearExpiry(ctx context.Context, asOf time.Time, withinDays int) ([]domain.Lot, error) {
 	cutoff := asOf.AddDate(0, 0, withinDays)
 	var lots []domain.Lot

@@ -52,3 +52,14 @@ func (r *transactionRepository) CountSince(ctx context.Context, since time.Time)
 		Count(&n).Error
 	return n, err
 }
+
+func (r *transactionRepository) AggregateByType(ctx context.Context, from, to time.Time) ([]TypeAggregate, error) {
+	var rows []TypeAggregate
+	err := dbFromCtx(ctx, r.db).
+		Model(&domain.StockTransaction{}).
+		Select("type, COUNT(*) AS count, COALESCE(SUM(quantity), 0) AS total_qty").
+		Where("created_at >= ? AND created_at < ?", from, to).
+		Group("type").
+		Scan(&rows).Error
+	return rows, err
+}

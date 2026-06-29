@@ -38,5 +38,6 @@ func Migrate(db *gorm.DB) error {
 		&domain.Medicine{},
 		&domain.Lot{},
 		&domain.StockTransaction{},
+		&domain.Setting{},
 	)
 }
