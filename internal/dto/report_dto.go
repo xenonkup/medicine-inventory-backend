@@ -17,6 +17,16 @@ type MonthlyReport struct {
 	TotalRet  int64            `json:"total_return"`
 }
 
+// MovementReport summarises stock movements for an arbitrary date range.
+type MovementReport struct {
+	From      string           `json:"from"`
+	To        string           `json:"to"`
+	Movements []MovementByType `json:"movements"`
+	TotalIn   int64            `json:"total_in"`
+	TotalOut  int64            `json:"total_out"`
+	TotalRet  int64            `json:"total_return"`
+}
+
 // CategoryStockItem is the derived stock total for one category (for charts).
 type CategoryStockItem struct {
 	Category string `json:"category"`

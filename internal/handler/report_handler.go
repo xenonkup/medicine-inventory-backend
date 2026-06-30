@@ -44,6 +44,37 @@ func (h *ReportHandler) Monthly(c *gin.Context) {
 	response.OK(c, res)
 }
 
+// Movements godoc
+// @Summary  Movement report for a date range
+// @Tags     Reports
+// @Security BearerAuth
+// @Router   /reports/movements [get]
+func (h *ReportHandler) Movements(c *gin.Context) {
+	const layout = "2006-01-02"
+	now := time.Now()
+
+	from, err := time.ParseInLocation(layout, c.Query("from"), time.UTC)
+	if err != nil {
+		from = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	}
+	to, err := time.ParseInLocation(layout, c.Query("to"), time.UTC)
+	if err != nil {
+		to = now
+	}
+	// Make `to` inclusive of the whole day.
+	to = to.AddDate(0, 0, 1)
+	if to.Before(from) {
+		from, to = to.AddDate(0, 0, -1), from.AddDate(0, 0, 1)
+	}
+
+	res, rerr := h.reports.Range(c.Request.Context(), from, to)
+	if rerr != nil {
+		response.Error(c, rerr)
+		return
+	}
+	response.OK(c, res)
+}
+
 // StockByCategory godoc
 // @Summary  Derived stock grouped by category
 // @Tags     Reports

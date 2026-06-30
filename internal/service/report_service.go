@@ -25,34 +25,69 @@ func (s *ReportService) Monthly(ctx context.Context, year int, month time.Month)
 	from := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
 	to := from.AddDate(0, 1, 0)
 
-	aggs, err := s.txns.AggregateByType(ctx, from, to)
+	movements, totalIn, totalOut, totalRet, err := s.movements(ctx, from, to)
 	if err != nil {
 		return nil, err
 	}
+	return &dto.MonthlyReport{
+		Year:      year,
+		Month:     int(month),
+		Movements: movements,
+		TotalIn:   totalIn,
+		TotalOut:  totalOut,
+		TotalRet:  totalRet,
+	}, nil
+}
 
-	report := &dto.MonthlyReport{Year: year, Month: int(month)}
-	// Always present all three types (zero-filled) for stable charts.
+// Range returns the movement breakdown for an arbitrary [from, to) date range.
+// `to` is treated as inclusive by the caller (the handler adds one day).
+func (s *ReportService) Range(ctx context.Context, from, to time.Time) (*dto.MovementReport, error) {
+	movements, totalIn, totalOut, totalRet, err := s.movements(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.MovementReport{
+		From:      from.Format("2006-01-02"),
+		To:        to.AddDate(0, 0, -1).Format("2006-01-02"),
+		Movements: movements,
+		TotalIn:   totalIn,
+		TotalOut:  totalOut,
+		TotalRet:  totalRet,
+	}, nil
+}
+
+// movements aggregates ledger entries in [from, to) into the three movement
+// types (zero-filled for stable charts) plus per-type totals.
+func (s *ReportService) movements(ctx context.Context, from, to time.Time) ([]dto.MovementByType, int64, int64, int64, error) {
+	aggs, err := s.txns.AggregateByType(ctx, from, to)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+
 	byType := map[domain.TxType]repository.TypeAggregate{}
 	for _, a := range aggs {
 		byType[a.Type] = a
 	}
+
+	var movements []dto.MovementByType
+	var totalIn, totalOut, totalRet int64
 	for _, t := range []domain.TxType{domain.TxIn, domain.TxOut, domain.TxReturn} {
 		a := byType[t]
-		report.Movements = append(report.Movements, dto.MovementByType{
+		movements = append(movements, dto.MovementByType{
 			Type:     string(t),
 			Count:    a.Count,
 			TotalQty: a.TotalQty,
 		})
 		switch t {
 		case domain.TxIn:
-			report.TotalIn = a.TotalQty
+			totalIn = a.TotalQty
 		case domain.TxOut:
-			report.TotalOut = a.TotalQty
+			totalOut = a.TotalQty
 		case domain.TxReturn:
-			report.TotalRet = a.TotalQty
+			totalRet = a.TotalQty
 		}
 	}
-	return report, nil
+	return movements, totalIn, totalOut, totalRet, nil
 }
 
 // StockByCategory returns derived stock totals per active category.

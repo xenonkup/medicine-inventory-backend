@@ -98,6 +98,7 @@ func New(cfg *config.Config, jwtMgr *jwt.Manager, h Handlers) *gin.Engine {
 	reports := v1.Group("/reports", middleware.Auth(jwtMgr))
 	{
 		reports.GET("/monthly", h.Report.Monthly)
+		reports.GET("/movements", h.Report.Movements)
 		reports.GET("/stock-by-category", h.Report.StockByCategory)
 	}
 
