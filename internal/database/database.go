@@ -18,7 +18,10 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		logLevel = gormlogger.Info
 	}
 
-	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  cfg.DatabaseURL,
+		PreferSimpleProtocol: true, // required for Supabase's pgbouncer transaction pooler
+	}), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(logLevel),
 	})
 	if err != nil {
