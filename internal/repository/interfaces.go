@@ -91,7 +91,7 @@ type TypeAggregate struct {
 // TransactionRepository abstracts persistence for the append-only ledger.
 type TransactionRepository interface {
 	Create(ctx context.Context, txn *domain.StockTransaction) error
-	List(ctx context.Context, f TransactionFilter) ([]domain.StockTransaction, int64, error)
+	List(ctx context.Context, f TransactionFilter) ([]TransactionWithDetails, int64, error)
 	CountSince(ctx context.Context, since time.Time) (int64, error)
 	AggregateByType(ctx context.Context, from, to time.Time) ([]TypeAggregate, error)
 }

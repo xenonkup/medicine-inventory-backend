@@ -239,7 +239,7 @@ func (s *StockService) LotsByMedicine(ctx context.Context, medicineID uuid.UUID)
 	return s.lots.ListByMedicine(ctx, medicineID)
 }
 
-// Transactions returns a page of ledger entries.
-func (s *StockService) Transactions(ctx context.Context, f repository.TransactionFilter) ([]domain.StockTransaction, int64, error) {
+// Transactions returns a page of ledger entries with medicine and lot details.
+func (s *StockService) Transactions(ctx context.Context, f repository.TransactionFilter) ([]repository.TransactionWithDetails, int64, error) {
 	return s.txns.List(ctx, f)
 }

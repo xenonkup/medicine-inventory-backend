@@ -4,10 +4,26 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"pharmacy-backend/internal/domain"
 )
+
+// TransactionWithDetails is a flat struct for Scan — embedded structs confuse GORM's column mapper.
+type TransactionWithDetails struct {
+	ID          uuid.UUID     `gorm:"column:id"`
+	LotID       uuid.UUID     `gorm:"column:lot_id"`
+	MedicineID  uuid.UUID     `gorm:"column:medicine_id"`
+	Type        domain.TxType `gorm:"column:type"`
+	Quantity    int           `gorm:"column:quantity"`
+	ReferenceNo *string       `gorm:"column:reference_no"`
+	Note        *string       `gorm:"column:note"`
+	CreatedByID uuid.UUID     `gorm:"column:created_by_id"`
+	CreatedAt   time.Time     `gorm:"column:created_at"`
+	MedicineName string       `gorm:"column:medicine_name"`
+	LotNumber    string       `gorm:"column:lot_number"`
+}
 
 type transactionRepository struct {
 	db *gorm.DB
@@ -22,26 +38,32 @@ func (r *transactionRepository) Create(ctx context.Context, txn *domain.StockTra
 	return dbFromCtx(ctx, r.db).Create(txn).Error
 }
 
-func (r *transactionRepository) List(ctx context.Context, f TransactionFilter) ([]domain.StockTransaction, int64, error) {
-	q := dbFromCtx(ctx, r.db).Model(&domain.StockTransaction{})
+func (r *transactionRepository) List(ctx context.Context, f TransactionFilter) ([]TransactionWithDetails, int64, error) {
+	base := dbFromCtx(ctx, r.db).Model(&domain.StockTransaction{})
 	if f.MedicineID != nil {
-		q = q.Where("medicine_id = ?", *f.MedicineID)
+		base = base.Where("stock_transactions.medicine_id = ?", *f.MedicineID)
 	}
 	if f.Type != nil {
-		q = q.Where("type = ?", *f.Type)
+		base = base.Where("stock_transactions.type = ?", *f.Type)
 	}
 
 	var total int64
-	if err := q.Count(&total).Error; err != nil {
+	if err := base.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	var txns []domain.StockTransaction
-	err := q.Order("created_at DESC").Offset(f.Offset).Limit(f.Limit).Find(&txns).Error
+	var rows []TransactionWithDetails
+	err := base.
+		Joins("JOIN medicines ON medicines.id = stock_transactions.medicine_id").
+		Joins("JOIN lots ON lots.id = stock_transactions.lot_id").
+		Select("stock_transactions.*, medicines.name AS medicine_name, lots.lot_number AS lot_number").
+		Order("stock_transactions.created_at DESC").
+		Offset(f.Offset).Limit(f.Limit).
+		Scan(&rows).Error
 	if err != nil {
 		return nil, 0, err
 	}
-	return txns, total, nil
+	return rows, total, nil
 }
 
 func (r *transactionRepository) CountSince(ctx context.Context, since time.Time) (int64, error) {

@@ -140,8 +140,8 @@ func (m *mockTxnRepo) Create(_ context.Context, txn *domain.StockTransaction) er
 	return nil
 }
 
-func (m *mockTxnRepo) List(_ context.Context, _ repository.TransactionFilter) ([]domain.StockTransaction, int64, error) {
-	return m.created, int64(len(m.created)), nil
+func (m *mockTxnRepo) List(_ context.Context, _ repository.TransactionFilter) ([]repository.TransactionWithDetails, int64, error) {
+	return nil, int64(len(m.created)), nil
 }
 
 func (m *mockTxnRepo) CountSince(_ context.Context, _ time.Time) (int64, error) {

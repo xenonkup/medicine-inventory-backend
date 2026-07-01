@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"pharmacy-backend/internal/domain"
+	"pharmacy-backend/internal/repository"
 )
 
 const dateLayout = "2006-01-02"
@@ -63,15 +64,17 @@ type StockOutResponse struct {
 
 // TransactionResponse is the public view of a ledger entry.
 type TransactionResponse struct {
-	ID          string  `json:"id"`
-	LotID       string  `json:"lot_id"`
-	MedicineID  string  `json:"medicine_id"`
-	Type        string  `json:"type"`
-	Quantity    int     `json:"quantity"`
-	ReferenceNo *string `json:"reference_no,omitempty"`
-	Note        *string `json:"note,omitempty"`
-	CreatedBy   string  `json:"created_by"`
-	CreatedAt   string  `json:"created_at"`
+	ID           string  `json:"id"`
+	LotID        string  `json:"lot_id"`
+	MedicineID   string  `json:"medicine_id"`
+	Type         string  `json:"type"`
+	Quantity     int     `json:"quantity"`
+	ReferenceNo  *string `json:"reference_no,omitempty"`
+	Note         *string `json:"note,omitempty"`
+	CreatedBy    string  `json:"created_by"`
+	CreatedAt    string  `json:"created_at"`
+	MedicineName string  `json:"medicine_name"`
+	LotNumber    string  `json:"lot_number"`
 }
 
 // ParseDate parses a YYYY-MM-DD string into a time.Time (UTC midnight).
@@ -92,17 +95,19 @@ func NewLotResponse(l *domain.Lot) LotResponse {
 	}
 }
 
-// NewTransactionResponse maps a domain ledger entry to its response shape.
-func NewTransactionResponse(t *domain.StockTransaction) TransactionResponse {
+// NewTransactionResponse maps a ledger entry (with joined details) to its response shape.
+func NewTransactionResponse(t *repository.TransactionWithDetails) TransactionResponse {
 	return TransactionResponse{
-		ID:          t.ID.String(),
-		LotID:       t.LotID.String(),
-		MedicineID:  t.MedicineID.String(),
-		Type:        string(t.Type),
-		Quantity:    t.Quantity,
-		ReferenceNo: t.ReferenceNo,
-		Note:        t.Note,
-		CreatedBy:   t.CreatedByID.String(),
-		CreatedAt:   t.CreatedAt.Format(time.RFC3339),
+		ID:           t.ID.String(),
+		LotID:        t.LotID.String(),
+		MedicineID:   t.MedicineID.String(),
+		Type:         string(t.Type),
+		Quantity:     t.Quantity,
+		ReferenceNo:  t.ReferenceNo,
+		Note:         t.Note,
+		CreatedBy:    t.CreatedByID.String(),
+		CreatedAt:    t.CreatedAt.Format(time.RFC3339),
+		MedicineName: t.MedicineName,
+		LotNumber:    t.LotNumber,
 	}
 }
